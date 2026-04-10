@@ -56,6 +56,34 @@ h1, h2, h3, h4, h5, h6 {
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
 
+/* Admin dashboard variables */
+.admin-shell {
+  --admin-bg: #FAFAF9;
+  --admin-surface: #FFFFFF;
+  --admin-border: #E5E3DC;
+  --admin-border-strong: #C9C6BC;
+  --admin-text: #1A1916;
+  --admin-muted: #6B6860;
+  --admin-dim: #9C9A92;
+  --admin-amber: #D97706;
+  --admin-amber-bg: #FFFBEB;
+  --admin-amber-border: #FDE68A;
+  --admin-green: #059669;
+  --admin-green-bg: #ECFDF5;
+  --admin-green-border: #A7F3D0;
+  --admin-red: #DC2626;
+  --admin-red-bg: #FEF2F2;
+  --admin-red-border: #FECACA;
+  --admin-blue: #2563EB;
+  --admin-blue-bg: #EFF6FF;
+  --admin-blue-border: #BFDBFE;
+  --admin-purple: #7C3AED;
+  --admin-purple-bg: #F5F3FF;
+  --admin-purple-border: #DDD6FE;
+}
+
+.font-mono { font-family: 'JetBrains Mono', monospace !important; }
+
 .landing * {
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 }
