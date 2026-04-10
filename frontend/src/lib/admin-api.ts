@@ -23,6 +23,8 @@ export const fetchWorker = (id: string) => api.get(`/api/workers/${id}`).then((r
 export const approveWorker = (id: string) => api.post(`/api/recruitment/${id}/approve`).then((r) => r.data);
 export const rejectWorker = (id: string) => api.post(`/api/recruitment/${id}/reject`).then((r) => r.data);
 export const sendTestSMS = (phone: string, message: string) => api.post("/api/sms/send-test", { phone, message }).then((r) => r.data);
+export const createWorkerManual = (body: Record<string, unknown>) => api.post("/api/workers", body).then((r) => r.data);
+export const updateWorkerManual = (id: string, body: Record<string, unknown>) => api.patch(`/api/workers/${id}`, body).then((r) => r.data);
 
 // Companies
 export const fetchCompanies = () => api.get("/api/companies").then((r) => r.data);

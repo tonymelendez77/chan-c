@@ -6,6 +6,7 @@ import PageHeader from "@/components/admin/PageHeader";
 import StatusBadge from "@/components/admin/StatusBadge";
 import QuickActions from "@/components/admin/QuickActions";
 import AdminNotes from "@/components/admin/AdminNotes";
+import ManualRegistrationDrawer from "@/components/admin/ManualRegistrationDrawer";
 import { fetchWorker, sendTestSMS, approveWorker } from "@/lib/admin-api";
 import { TRADE_LABELS, SKILL_LABELS, type Worker } from "@/lib/types";
 
@@ -13,6 +14,8 @@ export default function AdminWorkerDetailPage({ params }: { params: Promise<{ id
   const { id } = use(params);
   const [worker, setWorker] = useState<Worker | null>(null);
   const [loading, setLoading] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const reload = () => fetchWorker(id).then(setWorker).catch(() => {});
 
   useEffect(() => { fetchWorker(id).then(setWorker).catch(() => {}).finally(() => setLoading(false)); }, [id]);
 
@@ -90,6 +93,7 @@ export default function AdminWorkerDetailPage({ params }: { params: Promise<{ id
 
         <div className="space-y-4">
           <QuickActions actions={[
+            { label: "✎ Completar manualmente", onClick: async () => { setDrawerOpen(true); }, variant: "amber" },
             { label: "Enviar SMS de prueba", onClick: async () => { await sendTestSMS(worker.phone, "Test desde admin CHAN-C"); }, variant: "default" },
             ...(!worker.is_vetted ? [{ label: "Aprobar trabajador", onClick: async () => { await approveWorker(worker.id); setWorker({ ...worker, is_active: true, is_vetted: true }); }, variant: "green" as const }] : []),
             { label: "Suspender trabajador", onClick: async () => {}, variant: "red" },
@@ -97,6 +101,8 @@ export default function AdminWorkerDetailPage({ params }: { params: Promise<{ id
           <AdminNotes initialValue={worker.notes || ""} onSave={async () => {}} />
         </div>
       </div>
+
+      <ManualRegistrationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} existingWorker={worker} onSaved={reload} />
     </div>
   );
 }

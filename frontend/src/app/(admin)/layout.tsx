@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { isAuthenticated, getCurrentUser } from "@/lib/auth";
 import {
   LayoutDashboard, GitPullRequest, Briefcase, MessageSquare,
   Users, UserPlus, Clock, Building2, ShieldCheck,
-  Brain, PhoneCall, CreditCard,
+  Brain, PhoneCall, CreditCard, PenLine,
 } from "lucide-react";
 
 const NAV = [
@@ -23,6 +23,7 @@ const NAV = [
     { href: "/admin/workers", label: "Pool activo", icon: Users },
     { href: "/admin/recruitment", label: "Reclutamiento", icon: UserPlus, badge: true },
     { href: "/admin/workers/pending", label: "Pendientes aprobación", icon: Clock, badgeRed: true },
+    { href: "/admin/workers/manual", label: "Registro manual", icon: PenLine },
   ]},
   { section: "EMPRESAS", items: [
     { href: "/admin/companies", label: "Empresas activas", icon: Building2 },
@@ -40,6 +41,17 @@ const NAV = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [manualMode, setManualMode] = useState(false);
+
+  useEffect(() => {
+    setManualMode(localStorage.getItem("chanc_manual_mode") === "true");
+  }, []);
+
+  const toggleManualMode = () => {
+    const next = !manualMode;
+    setManualMode(next);
+    localStorage.setItem("chanc_manual_mode", String(next));
+  };
 
   useEffect(() => {
     if (!isAuthenticated()) { router.push("/login"); return; }
@@ -91,6 +103,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           ))}
         </nav>
+
+        {/* Manual Mode toggle */}
+        <div className="px-4 py-4 mt-auto" style={{ borderTop: "1px solid var(--admin-border)" }}>
+          <button onClick={toggleManualMode} className="flex items-center gap-2 w-full rounded-lg px-3 py-2" style={{ background: manualMode ? "var(--admin-amber-bg)" : "transparent", border: `1px solid ${manualMode ? "var(--admin-amber-border)" : "var(--admin-border)"}` }}>
+            {manualMode && <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--admin-amber)" }} />}
+            <span style={{ fontSize: 12, fontWeight: 500, color: manualMode ? "var(--admin-amber)" : "var(--admin-dim)" }}>
+              Modo manual {manualMode ? "ON" : "OFF"}
+            </span>
+          </button>
+          {manualMode && <p style={{ fontSize: 10, color: "var(--admin-dim)", marginTop: 4, paddingLeft: 12 }}>Pipeline de IA pausado</p>}
+        </div>
       </aside>
 
       {/* Main */}

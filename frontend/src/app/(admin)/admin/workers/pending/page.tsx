@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import PageHeader from "@/components/admin/PageHeader";
 import AdminTable, { type Column } from "@/components/admin/AdminTable";
 import StatusBadge from "@/components/admin/StatusBadge";
+import ManualRegistrationDrawer from "@/components/admin/ManualRegistrationDrawer";
 import { fetchPendingWorkers, approveWorker, rejectWorker } from "@/lib/admin-api";
 
 interface PendingWorker { id: string; full_name: string; phone: string; zone: string; language: string; created_at: string; initial_score: number | null; intake_completed: boolean; reference_count: number; [key: string]: unknown; }
@@ -13,9 +14,17 @@ export default function PendingWorkersPage() {
   const router = useRouter();
   const [workers, setWorkers] = useState<PendingWorker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<PendingWorker | null>(null);
 
   const load = () => { setLoading(true); fetchPendingWorkers().then(setWorkers).catch(() => {}).finally(() => setLoading(false)); };
   useEffect(load, []);
+
+  const openManual = (r: PendingWorker, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedWorker(r);
+    setDrawerOpen(true);
+  };
 
   const columns: Column<PendingWorker>[] = [
     { key: "full_name", label: "Nombre", render: (r) => <span style={{ fontWeight: 500 }}>{r.full_name}</span> },
@@ -31,6 +40,7 @@ export default function PendingWorkersPage() {
     { key: "reference_count", label: "Refs", mono: true },
     { key: "actions", label: "Acciones", render: (r) => (
       <div className="flex gap-1">
+        <button onClick={(e) => openManual(r, e)} className="rounded px-2 py-1 text-xs font-medium" style={{ background: "var(--admin-amber-bg)", border: "1px solid var(--admin-amber-border)", color: "var(--admin-amber)" }}>✎ Manual</button>
         <button onClick={(e) => { e.stopPropagation(); approveWorker(r.id).then(load); }} className="rounded px-2 py-1 text-xs font-medium" style={{ background: "var(--admin-green-bg)", border: "1px solid var(--admin-green-border)", color: "var(--admin-green)" }}>Aprobar</button>
         <button onClick={(e) => { e.stopPropagation(); rejectWorker(r.id).then(load); }} className="rounded px-2 py-1 text-xs font-medium" style={{ background: "var(--admin-red-bg)", border: "1px solid var(--admin-red-border)", color: "var(--admin-red)" }}>Rechazar</button>
       </div>
@@ -41,6 +51,13 @@ export default function PendingWorkersPage() {
     <div>
       <PageHeader title="Trabajadores pendientes de aprobación" subtitle={`${workers.length} pendientes`} />
       <AdminTable columns={columns} data={workers} loading={loading} onRowClick={(r) => router.push(`/admin/workers/${r.id}`)} emptyMessage="No hay trabajadores pendientes" />
+
+      <ManualRegistrationDrawer
+        open={drawerOpen}
+        onClose={() => { setDrawerOpen(false); setSelectedWorker(null); }}
+        existingWorker={selectedWorker ? { id: selectedWorker.id, full_name: selectedWorker.full_name, phone: selectedWorker.phone, zone: selectedWorker.zone, language: selectedWorker.language } : null}
+        onSaved={load}
+      />
     </div>
   );
 }
