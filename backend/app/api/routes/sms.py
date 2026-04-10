@@ -122,6 +122,47 @@ async def incoming_sms(
         await db.commit()
         return Response(content=str(twiml), media_type="text/xml")
 
+    # --- PAUSAR flow ---
+    if reply == "PAUSAR":
+        await sms_service.log_inbound_sms(
+            db, worker_id=worker.id if worker else None, match_id=None, message=Body, twilio_sid=MessageSid,
+        )
+        if worker is None:
+            twiml.message("No encontramos tu numero. Escribe TRABAJO para registrarte.")
+        elif getattr(worker, "paused", False):
+            await sms_service.send_sms(
+                db, worker.phone,
+                f"Ya tienes las ofertas pausadas {worker.full_name}. Escribe REANUDAR cuando estes disponible.",
+                worker_id=worker.id,
+            )
+        else:
+            worker.paused = True
+            worker.is_available = False
+            await sms_service.send_pause_confirmation(db, worker)
+        await db.commit()
+        return Response(content=str(twiml), media_type="text/xml")
+
+    # --- REANUDAR flow ---
+    if reply == "REANUDAR":
+        await sms_service.log_inbound_sms(
+            db, worker_id=worker.id if worker else None, match_id=None, message=Body, twilio_sid=MessageSid,
+        )
+        if worker is None:
+            twiml.message("No encontramos tu numero. Escribe TRABAJO para registrarte.")
+        elif not getattr(worker, "paused", False):
+            await sms_service.send_sms(
+                db, worker.phone,
+                f"Ya estas activo {worker.full_name}. Te avisamos cuando haya trabajo disponible.",
+                worker_id=worker.id,
+            )
+        else:
+            worker.paused = False
+            worker.is_available = True
+            worker.paused_until = None
+            await sms_service.send_resume_confirmation(db, worker)
+        await db.commit()
+        return Response(content=str(twiml), media_type="text/xml")
+
     # --- Existing flow: SI/NO/CONTRA or unknown ---
     if worker is None:
         twiml.message("No encontramos tu numero. Escribe TRABAJO para registrarte.")

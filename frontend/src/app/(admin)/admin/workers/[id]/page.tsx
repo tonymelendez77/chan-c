@@ -7,7 +7,7 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import QuickActions from "@/components/admin/QuickActions";
 import AdminNotes from "@/components/admin/AdminNotes";
 import ManualRegistrationDrawer from "@/components/admin/ManualRegistrationDrawer";
-import { fetchWorker, sendTestSMS, approveWorker } from "@/lib/admin-api";
+import { fetchWorker, sendTestSMS, approveWorker, updateWorkerManual } from "@/lib/admin-api";
 import { TRADE_LABELS, SKILL_LABELS, type Worker } from "@/lib/types";
 
 export default function AdminWorkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,10 +25,18 @@ export default function AdminWorkerDetailPage({ params }: { params: Promise<{ id
   return (
     <div>
       <PageHeader title={worker.full_name} subtitle={`Zona ${worker.zone} · ${worker.phone}`} backHref="/admin/workers">
-        {worker.is_active && worker.is_vetted ? <StatusBadge status="" label="Activo" color="green" /> :
+        {worker.paused ? <StatusBadge status="" label="⏸️ Pausado" color="amber" /> :
+         worker.is_active && worker.is_vetted ? <StatusBadge status="" label="Activo" color="green" /> :
          worker.is_active ? <StatusBadge status="" label="Sin vetar" color="amber" /> :
          <StatusBadge status="" label="Inactivo" color="red" />}
       </PageHeader>
+
+      {worker.paused && (
+        <div className="flex items-center justify-between rounded-xl px-5 py-3 mb-6" style={{ background: "var(--admin-amber-bg)", border: "1px solid var(--admin-amber-border)" }}>
+          <p style={{ fontSize: 14, color: "var(--admin-amber)" }}>⏸️ Este trabajador pausó sus ofertas{worker.paused_reason ? ` — ${worker.paused_reason}` : ""}</p>
+          <button onClick={async () => { await updateWorkerManual(worker.id, { paused: false, is_available: true }); reload(); }} className="rounded-lg px-3 py-1.5 text-xs font-medium" style={{ background: "var(--admin-green-bg)", border: "1px solid var(--admin-green-border)", color: "var(--admin-green)" }}>Reactivar manualmente</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
         <div className="space-y-4">
@@ -92,6 +100,23 @@ export default function AdminWorkerDetailPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="space-y-4">
+          {/* Availability toggle */}
+          <div className="rounded-xl p-4" style={{ background: worker.paused ? "var(--admin-amber-bg)" : "var(--admin-green-bg)", border: `1px solid ${worker.paused ? "var(--admin-amber-border)" : "var(--admin-green-border)"}` }}>
+            <p className="mb-2" style={{ fontSize: 14, fontWeight: 500, color: worker.paused ? "var(--admin-amber)" : "var(--admin-green)" }}>
+              {worker.paused ? "⏸️ Ofertas pausadas" : "✅ Recibiendo ofertas"}
+            </p>
+            <p className="mb-3" style={{ fontSize: 12, color: "var(--admin-muted)" }}>
+              {worker.paused ? "Este trabajador no recibe ofertas" : "Este trabajador recibe ofertas normalmente"}
+            </p>
+            <button
+              onClick={async () => { await updateWorkerManual(worker.id, worker.paused ? { paused: false, is_available: true } : { paused: true, is_available: false }); reload(); }}
+              className="w-full rounded-lg py-2 text-xs font-medium"
+              style={{ background: worker.paused ? "var(--admin-green-bg)" : "var(--admin-amber-bg)", border: `1px solid ${worker.paused ? "var(--admin-green-border)" : "var(--admin-amber-border)"}`, color: worker.paused ? "var(--admin-green)" : "var(--admin-amber)" }}
+            >
+              {worker.paused ? "Reactivar ofertas" : "Pausar ofertas"}
+            </button>
+          </div>
+
           <QuickActions actions={[
             { label: "✎ Completar manualmente", onClick: async () => { setDrawerOpen(true); }, variant: "amber" },
             { label: "Enviar SMS de prueba", onClick: async () => { await sendTestSMS(worker.phone, "Test desde admin CHAN-C"); }, variant: "default" },

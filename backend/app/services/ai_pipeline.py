@@ -67,6 +67,10 @@ async def process_pending_ai_calls(db: AsyncSession) -> int:
                 select(Worker).where(Worker.id == match.worker_id)
             )).scalar_one()
 
+            if getattr(worker, "paused", False):
+                logger.info("Skipping match %s — worker is paused", match.id)
+                continue
+
             job = (await db.execute(
                 select(Job).where(Job.id == match.job_id)
             )).scalar_one()

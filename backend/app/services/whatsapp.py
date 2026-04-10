@@ -150,6 +150,26 @@ async def send_whatsapp_rating_request(
     return await send_whatsapp(db, worker.phone, msg, worker_id=worker.id)
 
 
+async def send_whatsapp_pause_confirmation(db: AsyncSession, worker) -> str | None:
+    """Confirm via WhatsApp that worker's offers are paused."""
+    msg = (
+        "\u23f8\ufe0f *Ofertas pausadas*\n"
+        f"Entendido {worker.full_name}. Pausamos tus ofertas.\n"
+        "Cuando est\u00e9s listo escribe *REANUDAR*."
+    )
+    return await send_whatsapp(db, worker.phone, msg, worker_id=worker.id)
+
+
+async def send_whatsapp_resume_confirmation(db: AsyncSession, worker) -> str | None:
+    """Confirm via WhatsApp that worker's offers are reactivated."""
+    msg = (
+        "\u25b6\ufe0f *Ofertas reactivadas*\n"
+        f"Bienvenido de vuelta {worker.full_name}.\n"
+        "Te avisamos cuando haya trabajo para ti. \U0001f4aa"
+    )
+    return await send_whatsapp(db, worker.phone, msg, worker_id=worker.id)
+
+
 async def send_whatsapp_intake_notice(db: AsyncSession, worker) -> str | None:
     """Send WhatsApp intake notice to new worker."""
     msg = (

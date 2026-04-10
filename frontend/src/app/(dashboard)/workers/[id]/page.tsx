@@ -36,6 +36,12 @@ export default function WorkerDetailPage({ params }: { params: Promise<{ id: str
         <ArrowLeft className="h-4 w-4" /> Volver
       </Link>
 
+      {worker.paused && (
+        <Card className="!border-amber-300 !bg-amber-50">
+          <p className="text-sm text-amber-700 font-medium">Este trabajador no está disponible actualmente. Puedes solicitar otro trabajador.</p>
+        </Card>
+      )}
+
       <WorkerProfileCard worker={worker} />
 
       {worker.profile?.bio && (

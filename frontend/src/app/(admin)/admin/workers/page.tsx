@@ -28,6 +28,7 @@ export default function AdminWorkersPage() {
     { key: "rating_avg", label: "Rating", mono: true, render: (r) => <span>★ {Number(r.rating_avg).toFixed(1)}</span> },
     { key: "total_jobs", label: "Trabajos", mono: true },
     { key: "is_active", label: "Estado", render: (r) =>
+      (r as Worker & { paused?: boolean }).paused ? <StatusBadge status="" label="⏸️ Pausado" color="amber" /> :
       r.is_active && r.is_vetted ? <StatusBadge status="" label="Activo" color="green" /> :
       r.is_active ? <StatusBadge status="" label="Sin vetar" color="amber" /> :
       <StatusBadge status="" label="Inactivo" color="red" />

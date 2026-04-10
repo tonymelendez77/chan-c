@@ -107,6 +107,12 @@ async def create_match(
     if worker is None:
         raise HTTPException(status_code=404, detail="Worker not found")
 
+    if getattr(worker, "paused", False):
+        raise HTTPException(
+            status_code=400,
+            detail="Este trabajador pausó sus ofertas. No puede recibir matches hasta que reactive.",
+        )
+
     job = (await db.execute(select(Job).where(Job.id == data.job_id))).scalar_one_or_none()
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")

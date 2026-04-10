@@ -9,10 +9,20 @@ _TRABAJAR_WORDS = {
     "trabajar", "trabajo", "empleo", "oficio",
     "quiero trabajar", "registrar", "registro",
 }
+_PAUSE_WORDS = {
+    "pausa", "pausar", "stop", "para",
+    "no mas", "no más", "descanso",
+    "vacaciones", "ocupado", "no ofertas",
+}
+_RESUME_WORDS = {
+    "continuar", "reanudar", "listo",
+    "disponible", "activo", "resume",
+    "ya puedo", "de vuelta",
+}
 
 
 def parse_worker_reply(message_body: str) -> str:
-    """Parse an incoming SMS body into SI, NO, CONTRA, TRABAJAR, or UNKNOWN.
+    """Parse an incoming SMS body into SI, NO, CONTRA, TRABAJAR, PAUSAR, REANUDAR, or UNKNOWN.
 
     Handles accent variations, mixed case, surrounding whitespace,
     and common shorthand.
@@ -31,4 +41,8 @@ def parse_worker_reply(message_body: str) -> str:
         return "CONTRA"
     if normalized in _TRABAJAR_WORDS:
         return "TRABAJAR"
+    if normalized in _PAUSE_WORDS:
+        return "PAUSAR"
+    if normalized in _RESUME_WORDS:
+        return "REANUDAR"
     return "UNKNOWN"

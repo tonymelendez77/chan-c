@@ -93,6 +93,10 @@ export interface Worker {
   created_at: string;
   dpi?: string;
   notes?: string;
+  paused?: boolean;
+  paused_until?: string;
+  paused_reason?: string;
+  pause_reason_code?: string;
   profile?: WorkerProfile;
   trades?: WorkerTrade[];
 }

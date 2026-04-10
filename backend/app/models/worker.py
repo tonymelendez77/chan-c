@@ -33,6 +33,11 @@ class Worker(UUIDMixin, TimestampMixin, Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     # TODO: add migration for whatsapp_enabled
     whatsapp_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # TODO: add migration for availability fields
+    paused: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    paused_until: Mapped[date | None] = mapped_column(Date, nullable=True)
+    paused_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    pause_reason_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Relationships
     profile: Mapped["WorkerProfile | None"] = relationship(

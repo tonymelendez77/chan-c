@@ -149,6 +149,18 @@ async def send_rating_request(
     return await send_sms(db, worker.phone, msg, worker_id=worker.id)
 
 
+async def send_pause_confirmation(db: AsyncSession, worker) -> str | None:
+    """Confirm to worker that their job offers are paused."""
+    msg = f"Entendido {worker.full_name}. Pausamos tus ofertas. Escribe REANUDAR cuando estes listo."
+    return await send_sms(db, worker.phone, msg, worker_id=worker.id)
+
+
+async def send_resume_confirmation(db: AsyncSession, worker) -> str | None:
+    """Confirm to worker that their job offers are active again."""
+    msg = f"Bienvenido de vuelta {worker.full_name}. Tus ofertas estan activas. Te avisamos pronto."
+    return await send_sms(db, worker.phone, msg, worker_id=worker.id)
+
+
 async def send_offer_via_preferred_channel(db: AsyncSession, worker, match, job) -> str | None:
     """Send job offer via worker's preferred channel. Defaults to SMS if WhatsApp not enabled."""
     if getattr(worker, "whatsapp_enabled", False):
