@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     VAPI_PHONE_NUMBER_ID: str = ""
     ANTHROPIC_API_KEY: str = ""
     CONFIDENCE_THRESHOLD: float = 0.7
+    ALLOWED_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://chan-c.vercel.app",
+        "https://chan-c.gt",
+    ]
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
