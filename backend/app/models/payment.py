@@ -20,6 +20,9 @@ class Payment(UUIDMixin, TimestampMixin, Base):
     )
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(10), default="GTQ", nullable=False)
+    # TODO: add migration for job_value + commission_pct
+    job_value: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    commission_pct: Mapped[float] = mapped_column(Numeric(5, 2), default=10.0, nullable=False)
     payment_type: Mapped[PaymentType] = mapped_column(
         Enum(PaymentType, name="payment_type"), nullable=False
     )

@@ -38,6 +38,9 @@ class Job(UUIDMixin, TimestampMixin, Base):
     daily_rate: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(10), default="GTQ", nullable=False)
     headcount: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    # TODO: add migration for total_value
+    # Total agreed job value (daily_rate × duration × headcount)
+    total_value: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     special_requirements: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[JobStatus] = mapped_column(

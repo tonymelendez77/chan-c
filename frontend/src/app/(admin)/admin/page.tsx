@@ -48,7 +48,7 @@ export default function AdminDashboard() {
     fetchPendingMatches().then(setPending).catch(() => {});
   }, []);
 
-  const s = stats || { active_workers: 0, vetted_workers: 0, open_jobs: 0, active_matches: 0, pending_matches: 0, completed_jobs_this_month: 0, total_companies: 0 };
+  const s: DashboardStats = stats || { active_workers: 0, vetted_workers: 0, open_jobs: 0, active_matches: 0, pending_matches: 0, completed_jobs_this_month: 0, total_companies: 0, commissions_pending: 0, commissions_collected: 0, average_commission: 0, total_job_value_active: 0 };
 
   return (
     <div>
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
         <StatCard label="Matches pendientes" value={s.pending_matches} icon={Clock} color="var(--admin-amber)" sub="Requieren atención" />
         <StatCard label="Trabajos abiertos" value={s.open_jobs} icon={Briefcase} color="var(--admin-blue)" sub="Esperando match" />
         <StatCard label="Llamadas IA activas" value={0} icon={PhoneCall} color="var(--admin-purple)" sub="En este momento" />
-        <StatCard label="Ingresos este mes" value={0} icon={TrendingUp} color="var(--admin-green)" sub="Comisiones cobradas" />
+        <StatCard label="Comisiones pendientes" value={Number(s.commissions_pending ?? 0)} icon={TrendingUp} color={Number(s.commissions_pending ?? 0) > 0 ? "var(--admin-amber)" : "var(--admin-green)"} sub="Por cobrar (Q)" />
         <StatCard label="Empresas" value={s.total_companies} icon={Building2} color="var(--admin-blue)" sub="Registradas" />
       </div>
 

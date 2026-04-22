@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_admin
-from app.models import Company, Job, Match, Worker
-from app.models.enums import JobStatus, MatchStatus
+from app.models import Company, Job, Match, Payment, Worker
+from app.models.enums import JobStatus, MatchStatus, PaymentStatus
 from app.schemas.auth import TokenData
 from app.schemas.dashboard import DashboardStats
 
@@ -18,7 +19,7 @@ async def get_dashboard_stats(
     db: AsyncSession = Depends(get_db),
     _admin: TokenData = Depends(require_admin),
 ):
-    """Return overview counts for the admin dashboard home page."""
+    """Return overview counts + commission totals for the admin dashboard home page."""
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -79,6 +80,35 @@ async def get_dashboard_stats(
         await db.execute(select(func.count()).select_from(Company))
     ).scalar() or 0
 
+    # --- Commission stats (10% business model) ---
+    commissions_pending = (
+        await db.execute(
+            select(func.coalesce(func.sum(Payment.amount), 0))
+            .where(Payment.status.in_([PaymentStatus.pending, PaymentStatus.invoiced, PaymentStatus.overdue]))
+        )
+    ).scalar() or 0
+
+    commissions_collected = (
+        await db.execute(
+            select(func.coalesce(func.sum(Payment.amount), 0))
+            .where(Payment.status == PaymentStatus.paid, Payment.paid_date >= month_start.date())
+        )
+    ).scalar() or 0
+
+    avg_row = (
+        await db.execute(
+            select(func.coalesce(func.avg(Payment.amount), 0))
+            .where(Payment.invoice_date >= month_start.date())
+        )
+    ).scalar() or 0
+
+    total_job_value_active = (
+        await db.execute(
+            select(func.coalesce(func.sum(Job.total_value), 0))
+            .where(Job.status.in_([JobStatus.open, JobStatus.matching, JobStatus.filled]))
+        )
+    ).scalar() or 0
+
     return DashboardStats(
         active_workers=active_workers,
         vetted_workers=vetted_workers,
@@ -87,4 +117,8 @@ async def get_dashboard_stats(
         pending_matches=pending_matches,
         completed_jobs_this_month=completed_jobs_this_month,
         total_companies=total_companies,
+        commissions_pending=Decimal(str(commissions_pending)),
+        commissions_collected=Decimal(str(commissions_collected)),
+        average_commission=Decimal(str(avg_row)),
+        total_job_value_active=Decimal(str(total_job_value_active)),
     )

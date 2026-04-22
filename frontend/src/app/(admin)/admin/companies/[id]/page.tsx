@@ -36,7 +36,6 @@ export default function AdminCompanyDetailPage({ params }: { params: Promise<{ i
               ["Tipo", TYPE_LABELS[company.company_type]],
               ["NIT", company.tax_id],
               ["Zona", `Zona ${company.zone}`],
-              ["Plan", company.subscription_plan],
               ["Trabajos publicados", String(company.job_count ?? 0)],
               ["Registrada", new Date(company.created_at).toLocaleDateString("es-GT")],
             ].map(([k, v]) => (

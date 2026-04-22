@@ -10,6 +10,7 @@ from .sms import router as sms_router
 from .ai_pipeline import router as ai_pipeline_router
 from .recruitment import router as recruitment_router
 from .whatsapp import router as whatsapp_router
+from .billing import router as billing_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)
@@ -22,3 +23,4 @@ api_router.include_router(sms_router)
 api_router.include_router(ai_pipeline_router)
 api_router.include_router(recruitment_router)
 api_router.include_router(whatsapp_router)
+api_router.include_router(billing_router)

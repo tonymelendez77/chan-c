@@ -159,8 +159,10 @@ class RatedBy(str, enum.Enum):
 
 
 class PaymentType(str, enum.Enum):
+    # Legacy values kept to avoid DB enum migration; new records use commission
     placement_fee = "placement_fee"
     subscription = "subscription"
+    commission = "commission"
 
 
 class PaymentStatus(str, enum.Enum):

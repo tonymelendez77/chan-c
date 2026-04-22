@@ -22,7 +22,6 @@ export default function AdminCompaniesPage() {
     { key: "contact_name", label: "Contacto" },
     { key: "email", label: "Email", mono: true, render: (r) => <span className="font-mono text-xs">{r.email}</span> },
     { key: "company_type", label: "Tipo", render: (r) => TYPE_LABELS[r.company_type] || r.company_type },
-    { key: "subscription_plan", label: "Plan", render: (r) => <StatusBadge status="" label={r.subscription_plan} color={r.subscription_plan === "pro" ? "purple" : r.subscription_plan === "basic" ? "blue" : "gray"} /> },
     { key: "is_verified", label: "Estado", render: (r) => r.is_verified ? <StatusBadge status="" label="Verificada" color="green" /> : <StatusBadge status="" label="Pendiente" color="amber" /> },
     { key: "created_at", label: "Fecha", mono: true, render: (r) => new Date(r.created_at).toLocaleDateString("es-GT") },
   ];

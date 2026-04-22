@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Input from "@/components/ui/Input";
@@ -32,10 +32,26 @@ const tradeOptions = Object.entries(TRADE_LABELS).map(([value, label]) => ({ val
 const skillOptions = Object.entries(SKILL_LABELS).map(([value, label]) => ({ value, label }));
 
 export default function JobForm({ onSubmit, loading }: JobFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<JobFormData>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<JobFormData>({
     resolver: zodResolver(schema),
     defaultValues: { headcount: "1" },
   });
+
+  // Live commission preview
+  const watched = useWatch({ control });
+  const rate = Number(watched.daily_rate || 0);
+  const headcount = Number(watched.headcount || 0);
+  let days = 0;
+  if (watched.start_date && watched.end_date) {
+    const start = new Date(watched.start_date);
+    const end = new Date(watched.end_date);
+    if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+      days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
+  }
+  const jobValue = rate * days * headcount;
+  const commission = jobValue * 0.10;
+  const showPreview = rate > 0 && days > 0 && headcount > 0;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -57,6 +73,21 @@ export default function JobForm({ onSubmit, loading }: JobFormProps) {
         <Input label="Tarifa diaria (Q)" type="number" placeholder="350" error={errors.daily_rate?.message} {...register("daily_rate")} />
         <Input label="Trabajadores necesarios" type="number" placeholder="1" error={errors.headcount?.message} {...register("headcount")} />
       </div>
+
+      {showPreview && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+          <p className="text-sm font-semibold text-amber-900 mb-2">💰 Estimado de comisión</p>
+          <p className="text-sm text-amber-800 font-mono">
+            Q{rate}/día × {days} día{days !== 1 ? "s" : ""} × {headcount} trabajador{headcount !== 1 ? "es" : ""}
+            {" = "}
+            <span className="font-semibold">Q{jobValue.toLocaleString("es-GT")} valor del trabajo</span>
+          </p>
+          <p className="text-sm text-amber-900 font-mono mt-1">
+            Comisión CHAN-C (10%): <span className="font-bold">Q{commission.toLocaleString("es-GT", { maximumFractionDigits: 2 })}</span>
+          </p>
+          <p className="text-xs text-amber-700 mt-2">Solo se cobra al confirmar el match.</p>
+        </div>
+      )}
 
       <div className="space-y-1">
         <label className="block text-sm font-medium text-slate-700">Descripción del trabajo</label>

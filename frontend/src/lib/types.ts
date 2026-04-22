@@ -1,7 +1,7 @@
 // Enums matching backend
 export type UserRole = "admin" | "company" | "worker";
 export type CompanyType = "construction" | "architecture" | "property_management" | "other";
-export type SubscriptionPlan = "none" | "basic" | "pro";
+// SubscriptionPlan removed — business model is 10% commission only
 export type Language = "spanish" | "kiche" | "mam" | "other";
 export type ProfileStatus = "pending_review" | "active" | "suspended";
 export type Trade =
@@ -42,6 +42,7 @@ export const SKILL_LABELS: Record<SkillLevel | "any", string> = {
 };
 
 // Interfaces
+// Business model: 10% commission on job value only (no subscriptions)
 export interface Company {
   id: string;
   user_id: string;
@@ -53,8 +54,44 @@ export interface Company {
   company_type: CompanyType;
   tax_id: string;
   is_verified: boolean;
-  subscription_plan: SubscriptionPlan;
   created_at: string;
+}
+
+export interface Payment {
+  id: string;
+  match_id: string;
+  company_id: string;
+  job_value?: number;
+  commission_pct: number;
+  amount: number;
+  currency: string;
+  payment_type: string;
+  status: "pending" | "invoiced" | "paid" | "overdue";
+  invoice_date?: string;
+  paid_date?: string;
+  company_name?: string;
+  worker_name?: string;
+  job_title?: string;
+  trade?: string;
+}
+
+export interface CommissionBreakdown {
+  daily_rate: number;
+  duration_days: number;
+  headcount: number;
+  job_value: number;
+  commission_pct: number;
+  commission_amount: number;
+  currency: string;
+  status?: string;
+}
+
+export interface BillingStats {
+  commissions_pending: number;
+  commissions_collected: number;
+  average_commission: number;
+  total_job_value_active: number;
+  currency: string;
 }
 
 export interface Job {
@@ -181,6 +218,10 @@ export interface DashboardStats {
   pending_matches: number;
   completed_jobs_this_month: number;
   total_companies: number;
+  commissions_pending: number;
+  commissions_collected: number;
+  average_commission: number;
+  total_job_value_active: number;
 }
 
 export interface TokenResponse {

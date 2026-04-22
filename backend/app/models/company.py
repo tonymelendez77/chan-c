@@ -25,6 +25,8 @@ class Company(UUIDMixin, TimestampMixin, Base):
     )
     tax_id: Mapped[str] = mapped_column(String(50), nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # TODO: subscription_plan deprecated — business model is 10% commission only.
+    # Remove these fields in a future migration.
     subscription_plan: Mapped[SubscriptionPlan] = mapped_column(
         Enum(SubscriptionPlan, name="subscription_plan"),
         default=SubscriptionPlan.none,

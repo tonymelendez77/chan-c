@@ -41,3 +41,9 @@ export const triggerReferenceCalls = () => api.post("/api/recruitment/trigger-re
 export const fetchJobs = (params?: string) => api.get(`/api/jobs${params ? `?${params}` : ""}`).then((r) => r.data);
 export const fetchJob = (id: string) => api.get(`/api/jobs/${id}`).then((r) => r.data);
 export const updateJobStatus = (id: string, status: string) => api.patch(`/api/jobs/${id}/status`, { status }).then((r) => r.data);
+
+// Billing / Commissions (10% model)
+export const fetchBillingStats = () => api.get("/api/billing/stats").then((r) => r.data);
+export const fetchCommissions = (status?: string) => api.get(`/api/billing${status ? `?status=${status}` : ""}`).then((r) => r.data);
+export const markCommissionPaid = (paymentId: string) => api.patch(`/api/billing/${paymentId}/mark-paid`).then((r) => r.data);
+export const fetchCommissionBreakdown = (matchId: string) => api.get(`/api/matches/${matchId}/commission`).then((r) => r.data);

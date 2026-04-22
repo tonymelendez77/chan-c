@@ -413,7 +413,7 @@ function Trust() {
     { icon: "🏗️", title: "Solo construcción", desc: "Electricistas, plomeros, albañiles, carpinteros. Especialistas en el sector, no generalistas." },
     { icon: "🪪", title: "DPI verificado", desc: "Cada trabajador pasa por verificación de identidad, entrevista de habilidades y referencias laborales." },
     { icon: "🗣️", title: "Español, K'iche, Mam", desc: "Accesible para todos los trabajadores de Guatemala, incluyendo comunidades indígenas." },
-    { icon: "💰", title: "Solo pagas al contratar", desc: "Sin suscripción obligatoria. Sin costo de búsqueda. Solo una comisión cuando el trabajo inicia." },
+    { icon: "💰", title: "Solo pagas al contratar", desc: "Sin suscripciones. Sin pagos mensuales. Solo 10% del valor del trabajo, únicamente cuando contratas." },
   ];
 
   return (
@@ -480,7 +480,7 @@ function CTASection() {
             Hablar con el equipo
           </a>
         </div>
-        <p style={{ fontSize: 13, color: "rgba(6,14,23,0.45)" }}>Sin tarjeta de crédito · Sin contrato · Solo resultados</p>
+        <p style={{ fontSize: 13, color: "rgba(6,14,23,0.45)" }}>Sin suscripción · 10% solo al contratar · Sin riesgo</p>
       </div>
     </section>
   );
