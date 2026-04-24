@@ -19,6 +19,8 @@ const schema = z.object({
   headcount: z.string().min(1, "Mínimo 1"),
   description: z.string().min(10, "Mínimo 10 caracteres"),
   special_requirements: z.string().optional(),
+  tools_provided: z.boolean().optional(),
+  tools_notes: z.string().optional(),
 });
 
 export type JobFormData = z.infer<typeof schema>;
@@ -34,11 +36,12 @@ const skillOptions = Object.entries(SKILL_LABELS).map(([value, label]) => ({ val
 export default function JobForm({ onSubmit, loading }: JobFormProps) {
   const { register, handleSubmit, control, formState: { errors } } = useForm<JobFormData>({
     resolver: zodResolver(schema),
-    defaultValues: { headcount: "1" },
+    defaultValues: { headcount: "1", tools_provided: false },
   });
 
   // Live commission preview
   const watched = useWatch({ control });
+  const toolsProvided = !!watched.tools_provided;
   const rate = Number(watched.daily_rate || 0);
   const headcount = Number(watched.headcount || 0);
   let days = 0;
@@ -103,9 +106,46 @@ export default function JobForm({ onSubmit, loading }: JobFormProps) {
         <label className="block text-sm font-medium text-slate-700">Requisitos especiales (opcional)</label>
         <textarea
           className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors min-h-[80px]"
-          placeholder="Herramientas, certificaciones, uniforme..."
+          placeholder="Certificaciones, uniforme, documentación..."
           {...register("special_requirements")}
         />
+      </div>
+
+      {/* Tools section */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">Herramientas y equipo</label>
+        <div className={`rounded-lg p-4 border ${toolsProvided ? "bg-emerald-50 border-emerald-200" : "bg-slate-50 border-slate-200"}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-slate-900">
+                {toolsProvided ? "✅ La empresa provee las herramientas" : "📦 El trabajador debe traer sus herramientas"}
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {toolsProvided ? "Indicaremos al trabajador que no necesita traer nada" : "Asegúrate de contratar trabajadores con sus propias herramientas"}
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer ml-4">
+              <input type="checkbox" className="sr-only peer" {...register("tools_provided")} />
+              <div className="w-11 h-6 bg-slate-300 peer-checked:bg-emerald-500 rounded-full peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5" />
+            </label>
+          </div>
+
+          {toolsProvided ? (
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-slate-600 mb-1">¿Qué herramientas proveerá la empresa?</label>
+              <textarea
+                rows={2}
+                placeholder="Ej: Casco, arnés, taladro industrial, sierra circular"
+                className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none"
+                {...register("tools_notes")}
+              />
+            </div>
+          ) : (
+            <div className="mt-3 rounded bg-amber-50 border border-amber-200 px-3 py-2">
+              <p className="text-xs text-amber-700">💡 Solo se mostrarán trabajadores que tengan sus propias herramientas o que indiquen que pueden trabajar sin ellas.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex justify-end">

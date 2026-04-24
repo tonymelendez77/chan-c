@@ -23,6 +23,8 @@ export interface ManualFormData {
   daily_rate: string;
   can_cover: string[];
   cannot_cover: string[];
+  tools_status: string;
+  tools_notes: string;
   is_vetted: boolean;
   vetting_date: string;
   verification_method: string;
@@ -37,6 +39,7 @@ const EMPTY_FORM: ManualFormData = {
   preferred_zones: [], excluded_zones: [], availability_notes: "",
   trade: "", skill_level: "mid", years_experience: "", daily_rate: "",
   can_cover: [], cannot_cover: [],
+  tools_status: "", tools_notes: "",
   is_vetted: false, vetting_date: new Date().toISOString().slice(0, 10),
   verification_method: "direct_call", verification_notes: "", manual_score: 0.7,
   references: [], admin_notes: "",
@@ -171,6 +174,8 @@ export default function ManualRegistrationDrawer({ open, onClose, existingWorker
         years_experience: t?.years_experience ? String(t.years_experience) : "",
         can_cover: t?.can_cover || [],
         cannot_cover: t?.cannot_cover || [],
+        tools_status: (t as { tools_status?: string } | undefined)?.tools_status || "",
+        tools_notes: (t as { tools_notes?: string } | undefined)?.tools_notes || "",
         admin_notes: existingWorker.notes || "",
       });
     } else {
@@ -201,7 +206,7 @@ export default function ManualRegistrationDrawer({ open, onClose, existingWorker
         zone: form.zone, language: form.language, notes: form.admin_notes || undefined,
         is_available: true,
         ...(activate ? { is_vetted: true } : {}),
-        trades: form.trade ? [{ trade: form.trade, skill_level: form.skill_level, years_experience: Number(form.years_experience) || 0, can_cover: form.can_cover.length ? form.can_cover : undefined, cannot_cover: form.cannot_cover.length ? form.cannot_cover : undefined }] : undefined,
+        trades: form.trade ? [{ trade: form.trade, skill_level: form.skill_level, years_experience: Number(form.years_experience) || 0, can_cover: form.can_cover.length ? form.can_cover : undefined, cannot_cover: form.cannot_cover.length ? form.cannot_cover : undefined, tools_status: form.tools_status || undefined, tools_notes: form.tools_notes || undefined }] : undefined,
         references: form.references.filter((r) => r.name && r.phone).map((r) => ({ reference_name: r.name, reference_phone: r.phone, relationship: r.relationship })) || undefined,
         profile: { bio: [form.verification_notes, form.preferred_zones.length ? `Zonas preferidas: ${form.preferred_zones.join(", ")}` : "", form.excluded_zones.length ? `Zonas excluidas: ${form.excluded_zones.join(", ")}` : ""].filter(Boolean).join(". ") || undefined, initial_score: form.manual_score },
       };
@@ -291,6 +296,37 @@ export default function ManualRegistrationDrawer({ open, onClose, existingWorker
             </div>
             <Field label="Puede cubrir"><TagInput tags={form.can_cover} onChange={(v) => update("can_cover", v)} placeholder="Ej: Instalación residencial" variant="green" /></Field>
             <Field label="No puede cubrir"><TagInput tags={form.cannot_cover} onChange={(v) => update("cannot_cover", v)} placeholder="Ej: Instalaciones trifásicas" variant="red" /></Field>
+
+            <Field label="Herramientas" required>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { value: "own_tools", icon: "🔧", title: "Tengo todas mis herramientas", desc: "Llega listo para trabajar" },
+                  { value: "partial_tools", icon: "🔨", title: "Tengo algunas herramientas", desc: "Necesita complementar" },
+                  { value: "needs_tools", icon: "📦", title: "No tiene herramientas", desc: "La empresa debe proveer todo" },
+                  { value: "depends_on_job", icon: "🤔", title: "Depende del trabajo", desc: "Consultar según el proyecto" },
+                ].map((opt) => {
+                  const active = form.tools_status === opt.value;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => update("tools_status", opt.value)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left"
+                      style={{ background: active ? "var(--admin-amber-bg)" : "var(--admin-surface)", border: `1px solid ${active ? "var(--admin-amber-border)" : "var(--admin-border)"}` }}>
+                      <span style={{ fontSize: 20 }}>{opt.icon}</span>
+                      <div className="flex-1">
+                        <p style={{ fontSize: 13, fontWeight: 500, color: active ? "var(--admin-amber)" : "var(--admin-text)" }}>{opt.title}</p>
+                        <p style={{ fontSize: 11, color: "var(--admin-muted)" }}>{opt.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+
+            <Field label="Detalle de herramientas (opcional)">
+              <textarea value={form.tools_notes} onChange={(e) => update("tools_notes", e.target.value)} rows={2}
+                placeholder="Ej: Tengo taladro, sierra circular y nivel. Necesito andamios para trabajos en altura."
+                className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
+                style={{ border: "1px solid var(--admin-border)", color: "var(--admin-text)" }} />
+            </Field>
           </Section>
 
           {/* Section 4 — Verification */}

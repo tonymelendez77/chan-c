@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import (
+    Boolean,
     Date,
     DateTime,
     Enum,
@@ -41,6 +42,10 @@ class Job(UUIDMixin, TimestampMixin, Base):
     # TODO: add migration for total_value
     # Total agreed job value (daily_rate × duration × headcount)
     total_value: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    # TODO: add migration for tools fields
+    tools_provided: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Free text, e.g. "La empresa provee: casco, arnés, taladro"
+    tools_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     special_requirements: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[JobStatus] = mapped_column(

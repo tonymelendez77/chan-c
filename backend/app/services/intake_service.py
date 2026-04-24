@@ -46,11 +46,17 @@ INTAKE_PROMPT = (
     "7. Nivel de experiencia (junior, intermedio, senior) "
     "8. Anos de experiencia "
     "9. Que trabajos puede cubrir "
-    "10. Que trabajos NO puede cubrir "
-    "11. Tarifa diaria esperada en quetzales "
-    "12. Disponibilidad (dias y horas) "
-    "13. Idioma preferido (espanol, kiche, mam, otro) "
-    "14. Hasta 3 referencias: nombre y telefono de cada una "
+    "10. Herramientas de trabajo: ¿tiene sus propias herramientas? "
+    "Por ejemplo taladro, sierra, nivel, llaves, etc. Opciones: "
+    "(a) tengo todas mis herramientas, "
+    "(b) tengo algunas, necesito otras, "
+    "(c) no tengo, la empresa debe proveer, "
+    "(d) depende del tipo de trabajo "
+    "11. Que trabajos NO puede cubrir "
+    "12. Tarifa diaria esperada en quetzales "
+    "13. Disponibilidad (dias y horas) "
+    "14. Idioma preferido (espanol, kiche, mam, otro) "
+    "15. Hasta 3 referencias: nombre y telefono de cada una "
     "Se amable, claro y paciente. Maximo 8 minutos. "
     "Si no entiende algo, explica de forma simple."
 )
@@ -76,6 +82,8 @@ Extract the following from the transcript and return as JSON:
   "years_experience": number or null,
   "can_cover": ["list of strings"],
   "cannot_cover": ["list of strings"],
+  "tools_status": "own_tools"|"needs_tools"|"partial_tools"|"depends_on_job" or null,
+  "tools_notes": "description of what they have and need" or null,
   "daily_rate": number or null,
   "availability_notes": string or null,
   "language": "spanish"|"kiche"|"mam"|"other",
@@ -227,6 +235,9 @@ async def apply_intake_extraction(
     if trade_str and trade_str in _TRADE_MAP:
         skill_str = extraction.get("skill_level", "junior")
         years = extraction.get("years_experience") or 0
+        tools_status_raw = extraction.get("tools_status")
+        if tools_status_raw not in {"own_tools", "needs_tools", "partial_tools", "depends_on_job"}:
+            tools_status_raw = None
         trade = WorkerTrade(
             worker_id=worker.id,
             trade=_TRADE_MAP[trade_str],
@@ -234,6 +245,8 @@ async def apply_intake_extraction(
             years_experience=int(years),
             can_cover=extraction.get("can_cover"),
             cannot_cover=extraction.get("cannot_cover"),
+            tools_status=tools_status_raw,
+            tools_notes=extraction.get("tools_notes"),
         )
         db.add(trade)
 

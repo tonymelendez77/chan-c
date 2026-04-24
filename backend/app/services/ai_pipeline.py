@@ -190,6 +190,8 @@ async def _handle_completed_call(
         counteroffer_dates=extraction_data.get("proposed_dates"),
         counteroffer_notes=extraction_data.get("counteroffer_notes"),
         availability_notes=extraction_data.get("availability_notes"),
+        has_required_tools=extraction_data.get("has_required_tools"),
+        tools_comment=extraction_data.get("tools_comment"),
         final_status=final_status,
         confidence_score=confidence,
         requires_admin_review=needs_review,

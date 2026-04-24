@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, Text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -31,6 +31,11 @@ class WorkerTrade(UUIDMixin, TimestampMixin, Base):
     verified_by_admin: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
+    # TODO: add migration for tools fields
+    # Values: "own_tools" | "needs_tools" | "partial_tools" | "depends_on_job"
+    tools_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Free text, e.g. "Tengo taladro y sierra, necesito andamios"
+    tools_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     worker: Mapped["Worker"] = relationship("Worker", back_populates="trades")

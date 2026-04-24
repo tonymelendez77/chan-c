@@ -24,6 +24,8 @@ Extract the following from the transcript and return as JSON:
   "can_cover": ["list of things worker confirmed they can do"],
   "cannot_cover": ["list of things they said they cannot do"],
   "availability_notes": "any notes about their schedule",
+  "has_required_tools": true | false | null,
+  "tools_comment": "what worker said about tools, or null",
   "final_status": "interested" | "not_interested" | "interested_with_conditions",
   "confidence_score": 0.0 to 1.0
 }
@@ -35,6 +37,8 @@ Extract the following from the transcript and return as JSON:
   "proposed_rate": numeric or null,
   "proposed_dates": "text description of proposed dates",
   "counteroffer_notes": "any conditions or special requirements",
+  "has_required_tools": true | false | null,
+  "tools_comment": "what worker said about tools, or null",
   "final_status": "interested_with_conditions",
   "confidence_score": 0.0 to 1.0
 }

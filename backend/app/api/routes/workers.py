@@ -25,10 +25,11 @@ async def list_workers(
     zone: str | None = None,
     is_available: bool | None = None,
     is_vetted: bool | None = None,
+    tools_status: str | None = None,
     db: AsyncSession = Depends(get_db),
     _admin: TokenData = Depends(require_admin),
 ):
-    """List all active workers with optional filters for trade, zone, availability, and vetting status."""
+    """List all active workers with optional filters (trade, zone, availability, vetting, tools_status)."""
     stmt = select(Worker).where(Worker.is_active.is_(True))
 
     if zone is not None:
@@ -39,6 +40,8 @@ async def list_workers(
         stmt = stmt.where(Worker.is_vetted.is_(is_vetted))
     if trade is not None:
         stmt = stmt.join(Worker.trades).where(WorkerTrade.trade == trade)
+    if tools_status is not None:
+        stmt = stmt.join(Worker.trades).where(WorkerTrade.tools_status == tools_status)
 
     stmt = stmt.order_by(Worker.created_at.desc())
     result = await db.execute(stmt)

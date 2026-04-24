@@ -43,6 +43,9 @@ class AIExtraction(UUIDMixin, TimestampMixin, Base):
         DateTime(timezone=True), nullable=True
     )
     extraction_model: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # TODO: migration for tools extraction fields
+    has_required_tools: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    tools_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     call: Mapped["AICall"] = relationship("AICall", back_populates="extractions")

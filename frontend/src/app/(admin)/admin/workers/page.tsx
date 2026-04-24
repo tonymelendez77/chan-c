@@ -8,12 +8,25 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import { fetchWorkers } from "@/lib/admin-api";
 import { TRADE_LABELS, type Worker } from "@/lib/types";
 
+const TOOLS_FILTERS = [
+  { value: "", label: "Herramientas: Todas" },
+  { value: "own_tools", label: "🔧 Tiene propias" },
+  { value: "partial_tools", label: "🔨 Parciales" },
+  { value: "needs_tools", label: "📦 Necesita" },
+  { value: "depends_on_job", label: "🤔 Depende" },
+];
+
 export default function AdminWorkersPage() {
   const router = useRouter();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toolsFilter, setToolsFilter] = useState<string>("");
 
-  useEffect(() => { fetchWorkers().then(setWorkers).catch(() => {}).finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    setLoading(true);
+    const params = toolsFilter ? `tools_status=${toolsFilter}` : undefined;
+    fetchWorkers(params).then(setWorkers).catch(() => {}).finally(() => setLoading(false));
+  }, [toolsFilter]);
 
   const columns: Column<Worker>[] = [
     { key: "full_name", label: "Nombre", render: (r) => (
@@ -38,6 +51,13 @@ export default function AdminWorkersPage() {
   return (
     <div>
       <PageHeader title="Pool de trabajadores" subtitle={`${workers.length} trabajadores`} />
+      <div className="flex gap-2 mb-4">
+        <select value={toolsFilter} onChange={(e) => setToolsFilter(e.target.value)}
+          className="rounded-lg px-3 py-1.5 text-sm"
+          style={{ background: "var(--admin-surface)", border: "1px solid var(--admin-border)", color: "var(--admin-text)" }}>
+          {TOOLS_FILTERS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+        </select>
+      </div>
       <AdminTable columns={columns} data={workers} loading={loading} onRowClick={(r) => router.push(`/admin/workers/${r.id}`)} emptyMessage="No hay trabajadores registrados" />
     </div>
   );

@@ -96,13 +96,22 @@ async def send_sms(
 
 
 async def send_job_offer(db: AsyncSession, worker, match, job) -> str | None:
-    """Send a formatted job offer SMS to a worker."""
+    """Send a formatted job offer SMS to a worker. Adds tools info if under 160 chars."""
     trade = _trade_name(job.trade_required)
     msg = (
         f"Hola {worker.full_name}. Trabajo de {trade} en Zona {job.zone}. "
         f"{job.start_date.strftime('%d/%m')} al {job.end_date.strftime('%d/%m')}. "
         f"Q{int(job.daily_rate)}/dia. Responde SI, NO o CONTRA."
     )
+    # Append tools info only if it fits in the remaining budget
+    tools_line = None
+    if getattr(job, "tools_provided", False):
+        tools_line = "Herramientas incluidas."
+    elif getattr(job, "tools_provided", None) is False:
+        tools_line = "Debes traer tus herramientas."
+    if tools_line and len(msg) + 1 + len(tools_line) <= 160:
+        msg = f"{msg} {tools_line}"
+
     return await send_sms(
         db, worker.phone, msg, worker_id=worker.id, match_id=match.id
     )

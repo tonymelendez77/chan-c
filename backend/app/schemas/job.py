@@ -18,6 +18,8 @@ class JobBase(BaseModel):
     headcount: int = 1
     description: str
     special_requirements: str | None = None
+    tools_provided: bool = False
+    tools_notes: str | None = None
 
 
 class JobCreate(JobBase):
@@ -51,6 +53,8 @@ class JobListRead(BaseModel):
 class JobDetailRead(JobListRead):
     description: str
     special_requirements: str | None = None
+    tools_provided: bool = False
+    tools_notes: str | None = None
     created_by: UUID
     updated_at: datetime
     company_name: str = ""

@@ -21,6 +21,8 @@ class WorkerTradeBase(BaseModel):
     can_cover: list[str] | None = None
     cannot_cover: list[str] | None = None
     verified_by_admin: bool = False
+    tools_status: str | None = None
+    tools_notes: str | None = None
 
 
 class WorkerTradeCreate(WorkerTradeBase):

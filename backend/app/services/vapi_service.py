@@ -20,8 +20,22 @@ def _build_assistant_prompt(
     job_daily_rate: str,
     company_name: str,
     call_type: str,
+    tools_provided: bool = False,
+    tools_notes: str = "",
 ) -> str:
     """Build the system prompt for the Vapi assistant based on call type."""
+    if tools_provided:
+        tools_context = (
+            "La empresa provee las herramientas necesarias. "
+            f"{('Herramientas: ' + tools_notes + '. ') if tools_notes else ''}"
+            "Informa al trabajador que no necesita traer nada."
+        )
+    else:
+        tools_context = (
+            "El trabajador debe traer sus propias herramientas. "
+            f"Pregunta si tiene las herramientas necesarias para este trabajo de {job_trade}."
+        )
+
     if call_type == "counteroffer":
         return (
             f"Eres un asistente de CHAN-C. Llamas a {worker_name} "
@@ -30,6 +44,7 @@ def _build_assistant_prompt(
             f"El trabajo ofrece Q{job_daily_rate} por dia. "
             f"Pregunta: que precio propone, que fechas le convienen, "
             f"y si tiene alguna condicion especial. "
+            f"{tools_context} "
             f"Se amable, claro y breve. Maximo 3 minutos."
         )
     # Default: confirmation
@@ -40,6 +55,7 @@ def _build_assistant_prompt(
         f"a Q{job_daily_rate} por dia con {company_name}. "
         f"Pregunta que puede cubrir y que no puede cubrir. "
         f"Pregunta sobre su disponibilidad exacta. "
+        f"{tools_context} "
         f"Se amable, claro y breve. Maximo 3 minutos."
     )
 
@@ -80,6 +96,8 @@ async def initiate_call(match, worker, job, company_name: str) -> str:
         job_daily_rate=str(int(job.daily_rate)),
         company_name=company_name,
         call_type=call_type,
+        tools_provided=bool(getattr(job, "tools_provided", False)),
+        tools_notes=getattr(job, "tools_notes", "") or "",
     )
 
     payload = {

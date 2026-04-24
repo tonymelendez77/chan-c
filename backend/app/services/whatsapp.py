@@ -98,15 +98,20 @@ async def send_whatsapp(
 
 
 async def send_whatsapp_job_offer(db: AsyncSession, worker, match, job) -> str | None:
-    """Send a rich-format WhatsApp job offer to a worker."""
+    """Send a rich-format WhatsApp job offer to a worker. Always includes tools section."""
     trade = _trade_name(job.trade_required)
+    if getattr(job, "tools_provided", False):
+        tools_line = "\U0001f527 *Herramientas:* La empresa provee todo"
+    else:
+        tools_line = "\U0001f527 *Herramientas:* Debes traer las tuyas"
     msg = (
         f"\U0001f44b Hola {worker.full_name}.\n\n"
         f"\U0001f4bc *Trabajo disponible*\n"
         f"Oficio: {trade}\n"
         f"Zona: {job.zone}\n"
         f"Fechas: {job.start_date.strftime('%d/%m')} al {job.end_date.strftime('%d/%m')}\n"
-        f"Pago: Q{int(job.daily_rate)}/d\u00eda\n\n"
+        f"Pago: Q{int(job.daily_rate)}/d\u00eda\n"
+        f"{tools_line}\n\n"
         f"Responde *SI*, *NO* o *CONTRA*"
     )
     return await send_whatsapp(

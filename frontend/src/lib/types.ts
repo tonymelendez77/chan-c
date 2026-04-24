@@ -108,6 +108,8 @@ export interface Job {
   headcount: number;
   description: string;
   special_requirements?: string;
+  tools_provided?: boolean;
+  tools_notes?: string | null;
   status: JobStatus;
   created_by: string;
   created_at: string;
@@ -157,6 +159,8 @@ export interface WorkerTrade {
   years_experience: number;
   can_cover?: string[];
   cannot_cover?: string[];
+  tools_status?: "own_tools" | "needs_tools" | "partial_tools" | "depends_on_job" | null;
+  tools_notes?: string | null;
   verified_by_admin: boolean;
   created_at: string;
 }
