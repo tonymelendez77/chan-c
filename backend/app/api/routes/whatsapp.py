@@ -1,5 +1,9 @@
+"""WhatsApp webhook + admin endpoints — Phase 1 conversation engine.
+
+Incoming messages are routed to the state-machine in
+app.services.whatsapp_conversation. Replies are sent via Twilio WhatsApp.
+"""
 from datetime import datetime, timezone
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import Response
@@ -10,17 +14,17 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 from app.api.deps import get_db, require_admin
 from app.core.config import settings
-from app.models import Company, Job, Match, Worker, WorkerOnboardingCall, WorkerProfile
-from app.models.enums import AICallStatus, MatchStatus, OnboardingCallType, ProfileStatus, WorkerReply
-from app.models.enums import Language
+from app.models import Job, Match, Worker
+from app.models.enums import MatchStatus
 from app.schemas.auth import TokenData
 from app.schemas.sms import SendOfferRequest, SendTestRequest
 from app.services import whatsapp as wa_service
-from app.services.sms_parser import parse_worker_reply
+from app.services.whatsapp_conversation import (
+    get_or_create_conversation,
+    handle_message,
+)
 
 router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
-
-_PENDING_WORKER_STATUSES = [MatchStatus.pending_worker]
 
 
 def _validate_twilio_signature(request: Request, form_body: dict) -> bool:
@@ -38,179 +42,47 @@ async def incoming_whatsapp(
     request: Request,
     From: str = Form(...),
     Body: str = Form(...),
+    ProfileName: str = Form(""),
     MessageSid: str = Form(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Twilio WhatsApp webhook — receives incoming messages from workers. Same logic as SMS."""
+    """Twilio WhatsApp webhook — routes every message through the conversation state machine."""
     twiml = MessagingResponse()
 
     form_data = {"From": From, "Body": Body}
+    if ProfileName:
+        form_data["ProfileName"] = ProfileName
     if MessageSid:
         form_data["MessageSid"] = MessageSid
     if not _validate_twilio_signature(request, form_data):
         return Response(content=str(twiml), media_type="text/xml", status_code=403)
 
-    # Strip whatsapp: prefix and +502 to get 8-digit phone
-    phone = From.replace("whatsapp:", "").replace("+502", "").replace("+", "").strip()
-
-    # Look up worker by phone
-    stmt = select(Worker).where(Worker.phone == phone)
-    result = await db.execute(stmt)
-    worker = result.scalar_one_or_none()
-
-    reply = parse_worker_reply(Body)
-
-    # --- TRABAJAR flow ---
-    if reply == "TRABAJAR":
-        await wa_service.log_inbound_whatsapp(
-            db,
-            worker_id=worker.id if worker else None,
-            match_id=None,
-            message=Body,
-            twilio_sid=MessageSid,
-        )
-
-        if worker is not None and worker.is_active:
-            await wa_service.send_whatsapp(
-                db, worker.phone,
-                "Ya tienes un perfil activo en CHAN-C. Te contactamos cuando haya trabajo para ti.",
-                worker_id=worker.id,
-            )
-        elif worker is not None:
-            await wa_service.send_whatsapp(
-                db, worker.phone,
-                "Tu perfil esta en revision. Te avisamos pronto.",
-                worker_id=worker.id,
-            )
-        else:
-            worker = Worker(
-                phone=phone,
-                full_name="Pendiente",
-                zone="",
-                language=Language.spanish,
-                is_active=False,
-                is_vetted=False,
-            )
-            db.add(worker)
-            await db.flush()
-
-            profile = WorkerProfile(
-                worker_id=worker.id,
-                profile_status=ProfileStatus.pending_review,
-            )
-            db.add(profile)
-
-            onboarding_call = WorkerOnboardingCall(
-                worker_id=worker.id,
-                call_type=OnboardingCallType.intake,
-                status=AICallStatus.initiated,
-            )
-            db.add(onboarding_call)
-
-            await wa_service.send_whatsapp_intake_notice(db, worker)
-
-        await db.commit()
-        return Response(content=str(twiml), media_type="text/xml")
-
-    # --- PAUSAR flow ---
-    if reply == "PAUSAR":
-        await wa_service.log_inbound_whatsapp(
-            db, worker_id=worker.id if worker else None, match_id=None, message=Body, twilio_sid=MessageSid,
-        )
-        if worker is None:
-            twiml.message("No encontramos tu numero. Escribe TRABAJO para registrarte.")
-        elif getattr(worker, "paused", False):
-            await wa_service.send_whatsapp(
-                db, worker.phone,
-                f"Ya tienes las ofertas pausadas {worker.full_name}. Escribe *REANUDAR* cuando estés disponible.",
-                worker_id=worker.id,
-            )
-        else:
-            worker.paused = True
-            worker.is_available = False
-            await wa_service.send_whatsapp_pause_confirmation(db, worker)
-        await db.commit()
-        return Response(content=str(twiml), media_type="text/xml")
-
-    # --- REANUDAR flow ---
-    if reply == "REANUDAR":
-        await wa_service.log_inbound_whatsapp(
-            db, worker_id=worker.id if worker else None, match_id=None, message=Body, twilio_sid=MessageSid,
-        )
-        if worker is None:
-            twiml.message("No encontramos tu numero. Escribe TRABAJO para registrarte.")
-        elif not getattr(worker, "paused", False):
-            await wa_service.send_whatsapp(
-                db, worker.phone,
-                f"Ya estás activo {worker.full_name}. Te avisamos cuando haya trabajo disponible.",
-                worker_id=worker.id,
-            )
-        else:
-            worker.paused = False
-            worker.is_available = True
-            worker.paused_until = None
-            await wa_service.send_whatsapp_resume_confirmation(db, worker)
-        await db.commit()
-        return Response(content=str(twiml), media_type="text/xml")
-
-    # --- Existing flow ---
-    if worker is None:
-        twiml.message("No encontramos tu numero. Escribe TRABAJO para registrarte.")
-        await wa_service.log_inbound_whatsapp(
-            db, worker_id=None, match_id=None, message=Body, twilio_sid=MessageSid
-        )
-        await db.commit()
-        return Response(content=str(twiml), media_type="text/xml")
-
-    match_stmt = (
-        select(Match)
-        .where(Match.worker_id == worker.id, Match.status.in_(_PENDING_WORKER_STATUSES))
-        .order_by(Match.created_at.desc())
-        .limit(1)
+    phone = (
+        From.replace("whatsapp:", "")
+        .replace("+502", "")
+        .replace("+", "")
+        .strip()
     )
-    match = (await db.execute(match_stmt)).scalar_one_or_none()
+    message = Body.strip()
 
+    conv = await get_or_create_conversation(db, phone)
     await wa_service.log_inbound_whatsapp(
         db,
-        worker_id=worker.id,
-        match_id=match.id if match else None,
-        message=Body,
+        worker_id=conv.worker_id,
+        match_id=None,
+        message=message,
         twilio_sid=MessageSid,
     )
 
-    if match is None:
-        twiml.message("No tienes ofertas pendientes en este momento.")
-        await db.commit()
-        return Response(content=str(twiml), media_type="text/xml")
+    response_text = await handle_message(db, phone, message, ProfileName)
 
-    if reply == "SI":
-        match.status = MatchStatus.pending_ai_call
-        match.worker_reply = WorkerReply.yes
-        match.worker_replied_at = datetime.now(timezone.utc)
+    try:
         await wa_service.send_whatsapp(
-            db, worker.phone,
-            "Gracias. Te llamamos pronto para confirmar detalles.",
-            worker_id=worker.id, match_id=match.id,
+            db, to_phone=phone, message=response_text, worker_id=conv.worker_id,
         )
-
-    elif reply == "NO":
-        match.status = MatchStatus.rejected_worker
-        match.worker_reply = WorkerReply.no
-        match.worker_replied_at = datetime.now(timezone.utc)
-        await wa_service.send_whatsapp_job_declined(db, worker)
-
-    elif reply == "CONTRA":
-        match.status = MatchStatus.pending_ai_call
-        match.worker_reply = WorkerReply.contra
-        match.worker_replied_at = datetime.now(timezone.utc)
-        await wa_service.send_whatsapp_counteroffer_call_notice(db, worker)
-
-    else:
-        await wa_service.send_whatsapp(
-            db, worker.phone,
-            "No entendimos tu respuesta. Responde *SI*, *NO* o *CONTRA*.",
-            worker_id=worker.id, match_id=match.id,
-        )
+    except Exception:
+        # Twilio sandbox/auth issue during dev — fall back to TwiML inline reply
+        twiml.message(response_text)
 
     await db.commit()
     return Response(content=str(twiml), media_type="text/xml")

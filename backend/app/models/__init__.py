@@ -41,6 +41,7 @@ from .worker_onboarding_call import WorkerOnboardingCall
 from .sms_log import SMSLog
 from .rating import Rating
 from .payment import Payment
+from .whatsapp_conversation import WhatsAppConversation
 
 __all__ = [
     "Base",
@@ -60,4 +61,5 @@ __all__ = [
     "SMSLog",
     "Rating",
     "Payment",
+    "WhatsAppConversation",
 ]

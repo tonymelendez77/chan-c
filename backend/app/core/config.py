@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     TWILIO_PHONE_NUMBER: str = ""
     TWILIO_WEBHOOK_SECRET: str = ""
     TWILIO_WHATSAPP_NUMBER: str = ""
+    # Cece's personal WhatsApp for bot-to-admin notifications
+    CECE_WHATSAPP_NUMBER: str = ""
     VAPI_API_KEY: str = ""
     VAPI_PHONE_NUMBER_ID: str = ""
     ANTHROPIC_API_KEY: str = ""

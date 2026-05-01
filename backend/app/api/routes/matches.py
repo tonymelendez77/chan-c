@@ -167,7 +167,82 @@ async def create_match(
     db.add(match)
     await db.commit()
     await db.refresh(match)
+
+    # Send WhatsApp match notification to the company
+    try:
+        await _notify_company_of_match(db, match, worker, job)
+    except Exception:
+        # Don't block match creation if WhatsApp fails
+        pass
+
     return await _enrich_match(match, db)
+
+
+async def _notify_company_of_match(db: AsyncSession, match: Match, worker: Worker, job: Job) -> None:
+    """Send WhatsApp match notification to the company and set their conversation state."""
+    from app.models import WhatsAppConversation
+    from app.services import whatsapp as wa_service
+    from sqlalchemy.orm.attributes import flag_modified
+
+    company = (await db.execute(select(Company).where(Company.id == job.company_id))).scalar_one_or_none()
+    if company is None:
+        return
+
+    conv_stmt = select(WhatsAppConversation).where(WhatsAppConversation.phone == company.phone)
+    conv = (await db.execute(conv_stmt)).scalar_one_or_none()
+    if conv is None:
+        return  # company hasn't engaged via WhatsApp yet
+
+    # Worker primary trade for tools
+    from app.models import WorkerTrade
+    wtrade = (await db.execute(select(WorkerTrade).where(WorkerTrade.worker_id == worker.id).limit(1))).scalar_one_or_none()
+    tools_friendly = {
+        "own_tools": "Tiene sus herramientas",
+        "partial_tools": "Tiene algunas herramientas",
+        "needs_tools": "Necesita herramientas",
+        "depends_on_job": "Depende del trabajo",
+    }
+    tools_text = tools_friendly.get(wtrade.tools_status, "—") if wtrade else "—"
+
+    can_cover = "\n".join([f"  • {c}" for c in (wtrade.can_cover or [])]) if wtrade else ""
+    cannot_cover = "\n".join([f"  • {c}" for c in (wtrade.cannot_cover or [])]) if wtrade else ""
+
+    parts = worker.full_name.split()
+    display_name = parts[0] + (f" {parts[-1][0]}." if len(parts) > 1 else "")
+
+    trade_es = {
+        "electrician": "Electricista", "plumber": "Plomero", "mason": "Albañil",
+        "carpenter": "Carpintero", "painter": "Pintor", "welder": "Soldador",
+        "roofer": "Techador", "general_labor": "Ayudante", "security": "Seguridad",
+        "housemaid": "Limpieza", "gardener": "Jardinero", "other": "Trabajo",
+    }.get(job.trade_required.value, str(job.trade_required.value))
+
+    msg = (
+        f"👷 *Encontramos un match* para tu trabajo de {trade_es} en Zona {job.zone}:\n\n"
+        f"*{display_name}*\n"
+        f"⭐ {worker.rating_avg:.1f} · {worker.total_jobs} trabajos\n\n"
+    )
+    if can_cover:
+        msg += f"✅ Puede cubrir:\n{can_cover}\n\n"
+    if cannot_cover:
+        msg += f"❌ No puede cubrir:\n{cannot_cover}\n\n"
+    msg += (
+        f"🔧 Herramientas: {tools_text}\n"
+        f"💰 Q{int(match.offered_rate)}/día\n\n"
+        "¿Qué decides?\n\n"
+        "Escribe *ACEPTAR* para contratar\n"
+        "Escribe *OTRO* para pedir otro trabajador"
+    )
+
+    await wa_service.send_whatsapp(db, company.phone, msg)
+
+    # Update conversation state
+    conv.state = "company_pending_match_decision"
+    merged = dict(conv.data or {})
+    merged["pending_match_id"] = str(match.id)
+    conv.data = merged
+    flag_modified(conv, "data")
+    await db.commit()
 
 
 @router.patch("/{match_id}/status", response_model=MatchDetailRead)

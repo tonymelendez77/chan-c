@@ -7,7 +7,7 @@ import { isAuthenticated, getCurrentUser } from "@/lib/auth";
 import {
   LayoutDashboard, GitPullRequest, Briefcase, MessageSquare,
   Users, UserPlus, Clock, Building2, ShieldCheck,
-  Brain, PhoneCall, CreditCard, PenLine,
+  Brain, PhoneCall, CreditCard, PenLine, MessageCircle,
 } from "lucide-react";
 
 const NAV = [
@@ -17,6 +17,7 @@ const NAV = [
   { section: "OPERACIONES", items: [
     { href: "/admin/matches", label: "Matches", icon: GitPullRequest, badge: true },
     { href: "/admin/jobs", label: "Trabajos", icon: Briefcase },
+    { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
     { href: "/admin/sms", label: "SMS Logs", icon: MessageSquare },
   ]},
   { section: "TRABAJADORES", items: [

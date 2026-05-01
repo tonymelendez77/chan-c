@@ -47,3 +47,11 @@ export const fetchBillingStats = () => api.get("/api/billing/stats").then((r) =>
 export const fetchCommissions = (status?: string) => api.get(`/api/billing${status ? `?status=${status}` : ""}`).then((r) => r.data);
 export const markCommissionPaid = (paymentId: string) => api.patch(`/api/billing/${paymentId}/mark-paid`).then((r) => r.data);
 export const fetchCommissionBreakdown = (matchId: string) => api.get(`/api/matches/${matchId}/commission`).then((r) => r.data);
+
+// WhatsApp conversations (Phase 1)
+export const fetchConversations = (params?: string) => api.get(`/api/admin/conversations${params ? `?${params}` : ""}`).then((r) => r.data);
+export const fetchConversation = (phone: string) => api.get(`/api/admin/conversations/${phone}`).then((r) => r.data);
+export const resetConversation = (phone: string) => api.post(`/api/admin/conversations/${phone}/reset`).then((r) => r.data);
+export const approveWorkerConv = (phone: string) => api.post(`/api/admin/conversations/${phone}/approve-worker`).then((r) => r.data);
+export const approveCompanyConv = (phone: string) => api.post(`/api/admin/conversations/${phone}/approve-company`).then((r) => r.data);
+export const adminSendWhatsApp = (phone: string, message: string) => api.post("/api/admin/whatsapp/send", { phone, message }).then((r) => r.data);
